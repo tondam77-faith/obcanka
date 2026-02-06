@@ -7,7 +7,7 @@
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="icon" href="icon.png" type="image/png">
     <meta name="theme-color" content="#f0f4f8">
-    <title>Občanka - Smart SRS v1.3</title>
+    <title>Občanka - Smart SRS v1.4</title>
     <style>
         :root {
             /* MODERNÍ MODRÉ SCHÉMA (Občanka) */
@@ -109,6 +109,19 @@
         .card-front { background: white; color: var(--text); }
         .card-back { background: var(--primary); color: white; transform: rotateY(180deg); align-items: flex-start; text-align: left; }
 
+        /* STYLY PRO AUDIO TLAČÍTKO */
+        .btn-audio {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(0,0,0,0.05); color: inherit;
+            border: none; border-radius: 50%; width: 35px; height: 35px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 1.2rem; transition: 0.2s;
+            z-index: 10; /* Aby bylo nad textem */
+        }
+        .card-back .btn-audio { background: rgba(255,255,255,0.2); color: white; }
+        .btn-audio:hover { transform: scale(1.1); }
+        .btn-audio:active { transform: scale(0.9); }
+
         .q-text { font-size: 1.6rem; font-weight: 800; line-height: 1.4; color: var(--primary); }
         .a-list { padding-left: 20px; font-size: 1.25rem; list-style: none; margin: 0; width: 100%; }
         .a-list li { margin-bottom: 12px; position: relative; padding-left: 10px; }
@@ -182,7 +195,7 @@
             <button class="btn-reset" onclick="fullReset()">Smazat všechna data (Reset)</button>
         </div>
         
-        <div style="text-align:center; color:#adb5bd; font-size:0.7rem; margin-top:20px;">Verze 1.3 (OV)</div>
+        <div style="text-align:center; color:#adb5bd; font-size:0.7rem; margin-top:20px;">Verze 1.4 (OV) + Audio 🔊</div>
     </div>
 
     <div id="ui-learning" class="hidden">
@@ -233,7 +246,7 @@
 </div>
 
 <script>
-    const APP_VERSION_DISPLAY = "v1.3 (OV)";
+    const APP_VERSION_DISPLAY = "v1.4 (OV)";
     const DB_NAME = "CivicsSRSDatabase";
     const DB_VERSION = 1;
     let db, decks = {}, sessionCards = [], sessionIdx = 0;
@@ -278,6 +291,30 @@
     }
     function saveDb() { db.transaction("state", "readwrite").objectStore("state").put(decks, "decks"); }
 
+    // --- AUDIO TTS LOGIC (NOVÉ) ---
+    function playAudio(e, type) {
+        e.stopPropagation(); // Zabránit otočení karty
+        const c = sessionCards[sessionIdx];
+        let textToRead = "";
+        
+        if (type === 'q') {
+            textToRead = c.q;
+        } else {
+            // Pokud je odpověď pole, spojíme ho, jinak přečteme string
+            textToRead = Array.isArray(c.a) ? c.a.join(". ") : c.a;
+        }
+
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // Zastavit předchozí
+            const utter = new SpeechSynthesisUtterance(textToRead);
+            utter.lang = 'cs-CZ'; // Čeština
+            utter.rate = 0.9; // Trochu pomaleji pro lepší srozumitelnost
+            window.speechSynthesis.speak(utter);
+        } else {
+            alert("Tvůj prohlížeč nepodporuje čtení textu.");
+        }
+    }
+
     // --- MAGICKÝ IMPORT (QR) ---
     async function checkUrlForImport() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -316,7 +353,6 @@
 
     // --- GUI & LOGIKA ---
     function renderMenu() {
-        // Stats
         let s = JSON.parse(localStorage.getItem('civics_stats')) || {streak:0, last:"", total:0};
         document.getElementById('stat-streak').innerText = s.streak;
         document.getElementById('stat-xp').innerText = s.total;
@@ -329,7 +365,6 @@
         document.getElementById('bb-new').style.width = (cN/t*100)+"%";
         document.getElementById('stat-mastered').innerText = Math.round(cM/t*100)+"%";
 
-        // Deck List & Archive
         const list = document.getElementById('deck-list'); 
         const arch = document.getElementById('archived-list');
         list.innerHTML = ""; arch.innerHTML = "";
@@ -371,7 +406,7 @@
         document.getElementById('progress-text').innerText = `${sessionIdx+1} / ${sessionCards.length}`;
         document.getElementById('progress-fill').style.width = ((sessionIdx/sessionCards.length)*100)+"%";
         
-        let qContent = `<div class="q-text">${c.q}</div>`;
+        let qContent = `<button class="btn-audio" onclick="playAudio(event, 'q')">🔊</button><div class="q-text">${c.q}</div>`;
         if(c.qImg) qContent += `<img src="${c.qImg}" style="max-height:150px; margin-top:10px; border-radius:8px;">`;
         document.getElementById('f-content').innerHTML = qContent;
         
@@ -387,7 +422,8 @@
         document.getElementById('card-el').classList.add('flipped');
         
         setTimeout(() => {
-            let html = c.a.length > 1 ? `<ul class="a-list">${c.a.map(x=>`<li>${x}</li>`).join('')}</ul>` : `<div style="font-size:1.4rem; font-weight:bold;">${c.a[0]}</div>`;
+            let html = `<button class="btn-audio" onclick="playAudio(event, 'a')">🔊</button>`;
+            html += c.a.length > 1 ? `<ul class="a-list">${c.a.map(x=>`<li>${x}</li>`).join('')}</ul>` : `<div style="font-size:1.4rem; font-weight:bold;">${c.a[0]}</div>`;
             if(c.aImg) html += `<img src="${c.aImg}" style="max-height:150px; margin-top:10px; border-radius:8px;">`;
             document.getElementById('b-content').innerHTML = html;
             document.getElementById('ui-btns-container').classList.remove('hidden');
@@ -397,6 +433,8 @@
 
     function handleSRS(q) {
         let c = sessionCards[sessionIdx];
+        window.speechSynthesis.cancel(); // Stop audio if playing
+        
         // Stats
         let s = JSON.parse(localStorage.getItem('civics_stats')) || {streak:0, last:"", total:0};
         const today = new Date().toISOString().split('T')[0];
