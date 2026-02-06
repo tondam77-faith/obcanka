@@ -1,10 +1,11 @@
-const CACHE_NAME = 'civics-srs-v1.1';
+const CACHE_NAME = 'civics-srs-v1.2';
 const ASSETS = [
   './',
   './index.html',
-  './manifest.json' 
+  './manifest.json',
+  './favicon.ico',
+  './icon.png'
 ];
-// Pozn: Pokud nemáte favicon pro občanku, nevadí, použije se systémová nebo žádná.
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
@@ -28,5 +29,4 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   e.respondWith(caches.match(e.request).then((res) => res || fetch(e.request)));
-
 });

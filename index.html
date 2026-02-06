@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="icon" href="icon.png" type="image/png">
     <meta name="theme-color" content="#f0f4f8">
-    <title>Občanka - Smart SRS v1.1</title>
+    <title>Občanka - Smart SRS v1.2</title>
     <style>
         :root {
             /* MODERNÍ MODRÉ SCHÉMA (Občanka) */
@@ -91,7 +92,7 @@
         .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
 
         .card-area { width: 100%; display: flex; justify-content: center; }
-        /* ZDE JE ZMĚNA - FIXNÍ VÝŠKA JAKO V DĚJEPISU */
+        /* FIXNÍ VÝŠKA JAKO V DĚJEPISU */
         .card-box { width: 100%; height: 380px; position: relative; cursor: pointer; perspective: 1000px; }
         
         .card { width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); transform-style: preserve-3d; position: relative; }
@@ -169,7 +170,7 @@
             <button class="btn-reset" onclick="fullReset()">Smazat všechna data (Reset)</button>
         </div>
         
-        <div style="text-align:center; color:#adb5bd; font-size:0.7rem; margin-top:20px;">Verze 1.1 (OV)</div>
+        <div style="text-align:center; color:#adb5bd; font-size:0.7rem; margin-top:20px;">Verze 1.2 (OV)</div>
     </div>
 
     <div id="ui-learning" class="hidden">
@@ -207,7 +208,7 @@
 </div>
 
 <script>
-    const APP_VERSION_DISPLAY = "v1.1 (OV)";
+    const APP_VERSION_DISPLAY = "v1.2 (OV)";
     const DB_NAME = "CivicsSRSDatabase";
     const DB_VERSION = 1;
     let db, decks = {}, sessionCards = [], sessionIdx = 0;
