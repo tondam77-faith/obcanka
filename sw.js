@@ -1,4 +1,4 @@
-const CACHE_NAME = 'civics-srs-v1.0';
+const CACHE_NAME = 'civics-srs-v1.1';
 const ASSETS = [
   './',
   './index.html',
@@ -28,4 +28,5 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   e.respondWith(caches.match(e.request).then((res) => res || fetch(e.request)));
+
 });
