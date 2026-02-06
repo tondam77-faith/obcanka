@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <title>Editor - Občanská výchova</title>
+    <style>
+        /* Modré schéma */
+        :root { --primary: #0056b3; --bg: #f0f4f8; --text: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; height: 100vh; display: flex; flex-direction: column; }
+        header { background: white; padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
+        h1 { margin: 0; color: var(--primary); font-size: 1.2rem; }
+        button { padding: 8px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-main { background: var(--primary); color: white; }
+        .btn-sec { background: white; border: 1px solid #ccc; color: #555; }
+        .workspace { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { width: 250px; background: white; border-right: 1px solid #ddd; padding: 10px; overflow-y: auto; }
+        .main-area { flex: 1; padding: 20px; overflow-y: auto; }
+        .deck-item { padding: 10px; cursor: pointer; border-radius: 6px; margin-bottom: 5px; }
+        .deck-item:hover { background: #e9ecef; }
+        .deck-item.active { background: var(--primary); color: white; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        td, th { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>🏛️ Editor Občanka</h1>
+    <div>
+        <button class="btn-sec" onclick="importJson()">Nahrát JSON</button>
+        <button class="btn-main" onclick="exportJson()">Stáhnout JSON</button>
+    </div>
+</header>
+<div class="workspace">
+    <div class="sidebar" id="deck-list"></div>
+    <div class="main-area" id="main-area">
+        <div style="text-align:center; color:#999; margin-top:50px;">Vyberte nebo vytvořte téma.</div>
+    </div>
+</div>
+<script>
+    let decks = JSON.parse(localStorage.getItem('teacher_decks_civics_v1')) || {};
+    let currentDeck = null;
+
+    function renderDecks() {
+        const list = document.getElementById('deck-list'); list.innerHTML = `<button class="btn-main" style="width:100%; margin-bottom:10px;" onclick="addDeck()">+ Nové téma</button>`;
+        Object.keys(decks).forEach(n => {
+            list.innerHTML += `<div class="deck-item ${currentDeck===n?'active':''}" onclick="selectDeck('${n}')">${n} (${decks[n].length})</div>`;
+        });
+    }
+    function addDeck() { const n = prompt("Název tématu:"); if(n && !decks[n]) { decks[n]=[]; save(); selectDeck(n); } }
+    function selectDeck(n) { currentDeck = n; renderDecks(); renderMain(); }
+    function renderMain() {
+        if(!currentDeck) return;
+        let html = `<h2>${currentDeck} <button onclick="delDeck()" style="font-size:0.7rem; background:#dc3545; color:white;">Smazat</button></h2>`;
+        html += `<table><tr><th>Otázka</th><th>Odpověď</th><th>Akce</th></tr>`;
+        decks[currentDeck].forEach((c, i) => {
+            html += `<tr><td>${c.q}</td><td>${c.a}</td><td><button onclick="delCard(${i})">🗑️</button></td></tr>`;
+        });
+        html += `</table><button class="btn-main" style="margin-top:20px;" onclick="addCard()">+ Přidat kartu</button>`;
+        document.getElementById('main-area').innerHTML = html;
+    }
+    function addCard() {
+        const q = prompt("Otázka:"); if(!q) return;
+        const a = prompt("Odpověď (více řádků oddělte čárkou):"); if(!a) return;
+        decks[currentDeck].push({q, a: a.split(','), id: Date.now(), reps:0, interval:0, ef:2.5, nextReview: Date.now()});
+        save(); renderMain(); renderDecks();
+    }
+    function delCard(i) { decks[currentDeck].splice(i, 1); save(); renderMain(); renderDecks(); }
+    function delDeck() { delete decks[currentDeck]; currentDeck=null; save(); renderDecks(); document.getElementById('main-area').innerHTML=""; }
+    function save() { localStorage.setItem('teacher_decks_civics_v1', JSON.stringify(decks)); }
+    function exportJson() { 
+        const blob = new Blob([JSON.stringify(decks)], {type:'application/json'}); 
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'obcanka.json'; a.click(); 
+    }
+    function importJson() {
+        const input = document.createElement('input'); input.type='file';
+        input.onchange = e => {
+            const r = new FileReader();
+            r.onload = v => { decks = Object.assign(decks, JSON.parse(v.target.result)); save(); renderDecks(); };
+            r.readAsText(e.target.files[0]);
+        };
+        input.click();
+    }
+    renderDecks();
+</script>
+</body>
+</html>
